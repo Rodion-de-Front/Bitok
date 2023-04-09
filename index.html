@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Bitochek Vue 3</title>
+        <meta charset="utf-8" />
+    </head>
+    <body>
+    <div class="main">
+        <div id="app">
+            <div v-for="item in items">
+                <rate-comp  v-bind:item="item"></rate-comp>
+            </div>
+        </div>
+
+        <div class="chart">
+            <canvas id="bitcoin-chart"></canvas>
+        </div>
+    </div>
+
+    <script  src="https://unpkg.com/vue@next"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+
+    <script>
+        let app = Vue.createApp({
+            data() {
+                return {
+                    items: []
+                }
+            },
+            mounted() {
+                this.renderBitok();
+                this.renderBitcoinChart();
+            },
+            methods: {
+                renderBitok() {
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("GET","https://api.coindesk.com/v1/bpi/currentprice.json",false);
+                    xhr.send()
+                    this.items = JSON.parse(xhr.responseText).bpi;
+                    console.log(this.items);
+                    console.log(JSON.parse(xhr.responseText).bpi);
+                },
+
+                renderBitcoinChart() {
+                    let ctx = document.getElementById('bitcoin-chart').getContext('2d');
+                    let data = [];
+                    let labels = [];
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("GET", "https://api.coindesk.com/v1/bpi/historical/close.json?start=2018-01-01&end=2023-04-07&currency=USD", false);
+                    xhr.send();
+                    let response = JSON.parse(xhr.responseText);
+                    for (let date in response.bpi) {
+                        data.push(response.bpi[date]);
+                        labels.push(date);
+                    }
+                    this.chartData = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Bitcoin Price',
+                            data: data,
+                            fill: false,
+                            borderColor: 'rgb(0, 168, 11)',
+                            tension: 0.1
+                        }]
+                        },
+                        options: {
+                        responsive: true
+                        }
+                    });
+                }
+            }
+            });
+    
+        app.component('rate-comp', {
+            props: ['item'],
+            template:  `<div class="column">
+                                <p class="code">{{item.code}}</p>
+                                <b class="rate">{{item.rate}}</b>    
+                        </div>`
+        });
+    
+        app.mount('#app');
+    </script>
+
+    </body>
+</html>
+
+
+<style>
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.main {
+    width: 100vw;
+    height: 100vh;
+}
+
+#app {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.chart {
+  margin: 0 auto;
+  width: 900px;
+  height: 500px;
+  background-color: black;
+}
+
+.column {
+    margin: 40px;
+    text-align: center;
+}
+
+.code {
+    color: aliceblue;
+    font-size: 20px;
+}
+
+.rate {
+    color: aliceblue;
+    font-size: 18px;
+}
+
+
+
+</style>
